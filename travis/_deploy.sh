@@ -1,5 +1,9 @@
-#!/bin/sh
+#!/bin/bash
+
 # Push HTML files to gh-pages automatically
+
+# Exit with nonzero exit code if anything fails
+set -e
 
 # skip if build is triggered by pull request
 if [ $TRAVIS_PULL_REQUEST == "true" ]; then
@@ -7,18 +11,18 @@ if [ $TRAVIS_PULL_REQUEST == "true" ]; then
   exit 0
 fi
 
+# Make sure GITHUB_PAT environment variable is set up
+[ -z "${GITHUB_PAT}" ] && exit 0
+# Only pushing to master should initiate the process
+[ "${TRAVIS_BRANCH}" != "master" ] && exit 0
+
 # Bundler output directory
 BUILD_DIR=dist
 # Maybe create a special user for CI in the future
-EMAIL=Overseer.O5.X@gmail.com
+EMAIL=travis@travis-ci.org
 
-set -e
-
-[ -z "${GITHUB_PAT}" ] && exit 0
-[ "${TRAVIS_BRANCH}" != "master" ] && exit 0
-
-git config user.email "$EMAIL"
-git config user.name "Travis Build"
+git config --global user.email "$EMAIL"
+git config --global user.name "Travis CI"
 
 # cleanup "site"
 rm -rf site
@@ -31,5 +35,5 @@ git rm -rf .
 touch .nojekyll
 cp -r ../$BUILD_DIR/* ./
 git add --all *
-git commit -a -m "Travis #$TRAVIS_BUILD_NUMBER"
+git commit -a -m "Travis build: #$TRAVIS_BUILD_NUMBER"
 git push --force origin gh-pages
